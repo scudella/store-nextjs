@@ -1,4 +1,12 @@
+import FeaturedProducts from '@/components/home/FeaturedProducts'
+import Hero from '@/components/home/Hero'
+
 function HomePage() {
-  return <div>HomePage</div>
+  return (
+    <>
+      <Hero />
+      <FeaturedProducts />
+    </>
+  )
 }
 export default HomePage
