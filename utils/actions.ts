@@ -1,4 +1,5 @@
 import {prisma} from './db'
+import {redirect} from 'next/navigation'
 
 export const fetchFeaturedProducts = async () => {
   return await prisma.product.findMany({
@@ -20,4 +21,17 @@ export const fetchAllProducts = async ({search = ''}: {search: string}) => {
       createdAt: 'desc',
     },
   })
+}
+
+export const fetchSingleProduct = async (productId: string) => {
+  const product = await prisma.product.findFirst({
+    where: {
+      uid: productId,
+    },
+  })
+
+  if (!product) {
+    redirect('/products')
+  }
+  return product
 }
