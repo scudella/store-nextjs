@@ -1,3 +1,5 @@
+'use client'
+
 import {SubmitButton} from '@/components/form/Buttons'
 import CheckboxInput from '@/components/form/CheckboxInput'
 import FormContainer from '@/components/form/FormContainer'

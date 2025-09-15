@@ -9,6 +9,7 @@ import {
   productSchemaServer,
   validateWithZodSchema,
 } from './validation/productSchemas'
+import {uploadImage} from './oci/bucket-upload'
 
 const getAuthUser = async () => {
   const user = await currentUser()
@@ -68,19 +69,24 @@ export const createProductAction = async (
     const rawData = Object.fromEntries(formData)
     const result = await validateWithZodSchema(productSchemaServer, rawData)
     const file = formData.get('image') as File
-    await validateWithZodSchema(imageSchemaServer, file)
+    const originalName = formData.get('imageName') as string
+    const validatedFile = await validateWithZodSchema(imageSchemaServer, file)
+    const objectName = await uploadImage(validatedFile, originalName)
 
-    await prisma.product.create({
-      data: {
-        ...result,
-        uid: uuidv4(),
-        image: '/images/hero1.jpg',
-        clerkId: user.id,
-      },
-    })
-
-    return {message: 'product created'}
+    if (objectName) {
+      await prisma.product.create({
+        data: {
+          ...result,
+          uid: uuidv4(),
+          image: `https://objectstorage.us-ashburn-1.oraclecloud.com/n/idl94repfhz7/b/bucket-store-nextjs/o/${objectName}`,
+          clerkId: user.id,
+        },
+      })
+    } else {
+      throw new Error('Bucket upload failed')
+    }
   } catch (error) {
     return renderError(error)
   }
+  redirect('/admin/products')
 }
