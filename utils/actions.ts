@@ -10,10 +10,19 @@ import {
   validateWithZodSchema,
 } from './validation/productSchemas'
 import {uploadImage} from './oci/bucket-upload'
+import {revalidatePath} from 'next/cache'
 
 const getAuthUser = async () => {
   const user = await currentUser()
   if (!user) redirect('/')
+  return user
+}
+
+const getAdminUser = async () => {
+  const user = await getAuthUser()
+  if (user.id !== process.env.ADMIN_USER_ID) {
+    redirect('/')
+  }
   return user
 }
 
@@ -89,4 +98,32 @@ export const createProductAction = async (
     return renderError(error)
   }
   redirect('/admin/products')
+}
+
+export const fetchAdminProducts = async () => {
+  await getAdminUser()
+  const products = await prisma.product.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
+  return products
+}
+
+export const deleteProductAction = async (prevState: {productId: string}) => {
+  const {productId} = prevState
+  console.log(productId)
+  await getAdminUser()
+
+  try {
+    await prisma.product.delete({
+      where: {
+        uid: productId,
+      },
+    })
+    revalidatePath('/admin/products')
+    return {message: 'product removed'}
+  } catch (error) {
+    return renderError(error)
+  }
 }

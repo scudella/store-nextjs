@@ -9,7 +9,7 @@ datasource db {
 
 model Product {
   id          BigInt    @id @default(autoincrement())
-  uid         String
+  uid         String    @unique 
   name        String
   company     String
   description String
