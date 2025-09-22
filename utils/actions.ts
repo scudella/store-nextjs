@@ -9,7 +9,7 @@ import {
   productSchemaServer,
   validateWithZodSchema,
 } from './validation/productSchemas'
-import {uploadImage} from './oci/bucket-upload'
+import {deleteImage, uploadImage} from './oci/bucket-upload'
 import {revalidatePath} from 'next/cache'
 
 const getAuthUser = async () => {
@@ -110,9 +110,11 @@ export const fetchAdminProducts = async () => {
   return products
 }
 
-export const deleteProductAction = async (prevState: {productId: string}) => {
-  const {productId} = prevState
-  console.log(productId)
+export const deleteProductAction = async (prevState: {
+  productId: string
+  imageName: string
+}) => {
+  const {productId, imageName} = prevState
   await getAdminUser()
 
   try {
@@ -121,6 +123,9 @@ export const deleteProductAction = async (prevState: {productId: string}) => {
         uid: productId,
       },
     })
+
+    deleteImage(imageName)
+
     revalidatePath('/admin/products')
     return {message: 'product removed'}
   } catch (error) {

@@ -35,7 +35,7 @@ async function AdminProductsPage() {
         </TableHeader>
         <TableBody>
           {items.map((item, _index) => {
-            const {uid: productId, name, company, price} = item
+            const {uid: productId, name, company, price, image} = item
 
             return (
               <TableRow key={_index}>
@@ -53,7 +53,7 @@ async function AdminProductsPage() {
                   <Link href={`/admin/products/${productId}/edit`}>
                     <IconButton actionType='edit' />
                   </Link>
-                  <DeleteProduct productId={productId} />
+                  <DeleteProduct productId={productId} imageName={image} />
                 </TableCell>
               </TableRow>
             )
@@ -64,8 +64,14 @@ async function AdminProductsPage() {
   )
 }
 
-function DeleteProduct({productId}: {productId: string}) {
-  const deleteProduct = deleteProductAction.bind(null, {productId})
+function DeleteProduct({
+  productId,
+  imageName,
+}: {
+  productId: string
+  imageName: string
+}) {
+  const deleteProduct = deleteProductAction.bind(null, {productId, imageName})
 
   return (
     <FormContainer action={deleteProduct}>
