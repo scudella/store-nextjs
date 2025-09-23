@@ -56,7 +56,7 @@ export const fetchAllProducts = async ({search = ''}: {search: string}) => {
 }
 
 export const fetchSingleProduct = async (productId: string) => {
-  const product = await prisma.product.findFirst({
+  const product = await prisma.product.findUnique({
     where: {
       uid: productId,
     },
@@ -128,6 +128,79 @@ export const deleteProductAction = async (prevState: {
 
     revalidatePath('/admin/products')
     return {message: 'product removed'}
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const fetchAdminProductDetails = async (productId: string) => {
+  await getAdminUser()
+  const product = await prisma.product.findUnique({
+    where: {
+      uid: productId,
+    },
+  })
+
+  if (!product) redirect('/admin/products')
+  return product
+}
+
+export const updateProductAction = async (
+  prevState: unknown,
+  formData: FormData
+) => {
+  await getAdminUser()
+  try {
+    const productId = formData.get('id') as string
+    const rawData = Object.fromEntries(formData)
+    const validatedFields = await validateWithZodSchema(
+      productSchemaServer,
+      rawData
+    )
+
+    await prisma.product.update({
+      where: {
+        uid: productId,
+      },
+      data: {
+        ...validatedFields,
+      },
+    })
+
+    revalidatePath(`/admin/products/${productId}/edit`)
+
+    return {message: 'Product updated successfully'}
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const updateProductImageAction = async (
+  prevState: unknown,
+  formData: FormData
+) => {
+  await getAuthUser()
+  try {
+    const file = formData.get('image') as File
+    const originalName = formData.get('imageName') as string
+    const productId = formData.get('id') as string
+    const oldImageUrl = formData.get('url') as string
+
+    const validatedFile = await validateWithZodSchema(imageSchemaServer, file)
+    const objectName = await uploadImage(validatedFile, originalName)
+
+    await deleteImage(oldImageUrl)
+
+    await prisma.product.update({
+      where: {
+        uid: productId,
+      },
+      data: {
+        image: `https://objectstorage.us-ashburn-1.oraclecloud.com/n/idl94repfhz7/b/bucket-store-nextjs/o/${objectName}`,
+      },
+    })
+    revalidatePath(`/admin/products/${productId}/edit`)
+    return {message: 'Product Image updated successfully'}
   } catch (error) {
     return renderError(error)
   }
