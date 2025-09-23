@@ -13,8 +13,7 @@ async function UserIcon() {
         alt='avatar'
         width={24}
         height={24}
-        objectFit='object-cover'
-        className='rounded-full'
+        className='rounded-full object-cover'
       />
     )
   }
