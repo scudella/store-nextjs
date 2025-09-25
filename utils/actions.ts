@@ -11,6 +11,7 @@ import {
 } from './validation/productSchemas'
 import {deleteImage, uploadImage} from './oci/bucket-upload'
 import {revalidatePath} from 'next/cache'
+import type {Product} from '@prisma/client'
 
 const getAuthUser = async () => {
   const user = await currentUser()
@@ -100,7 +101,7 @@ export const createProductAction = async (
   redirect('/admin/products')
 }
 
-export const fetchAdminProducts = async () => {
+export const fetchAdminProducts = async (): Promise<Product[]> => {
   await getAdminUser()
   const products = await prisma.product.findMany({
     orderBy: {

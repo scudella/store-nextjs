@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/table'
 import {IconButton} from '@/components/form/Buttons'
 import FormContainer from '@/components/form/FormContainer'
+import type {Product} from '@prisma/client'
 
 async function AdminProductsPage() {
-  const items: Awaited<ReturnType<typeof fetchAdminProducts>> =
-    await fetchAdminProducts()
+  const items: Product[] = await fetchAdminProducts()
   if (items.length === 0) return <EmptyList />
 
   return (
@@ -35,7 +35,7 @@ async function AdminProductsPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item, _index) => {
+          {items.map((item: Product, _index) => {
             const {uid: productId, name, company, price, image} = item
 
             return (
