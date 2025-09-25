@@ -16,7 +16,8 @@ import {IconButton} from '@/components/form/Buttons'
 import FormContainer from '@/components/form/FormContainer'
 
 async function AdminProductsPage() {
-  const items = await fetchAdminProducts()
+  const items: Awaited<ReturnType<typeof fetchAdminProducts>> =
+    await fetchAdminProducts()
   if (items.length === 0) return <EmptyList />
 
   return (
