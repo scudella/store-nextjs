@@ -205,3 +205,78 @@ export const updateProductImageAction = async (
     return renderError(error)
   }
 }
+
+export const fetchFavoriteId = async ({productId}: {productId: string}) => {
+  const user = await getAuthUser()
+
+  const product = await prisma.product.findUnique({
+    where: {
+      uid: productId,
+    },
+  })
+
+  const favorite = await prisma.favorite.findFirst({
+    where: {
+      productId: product?.id,
+      clerkId: user.id,
+    },
+    select: {
+      uid: true,
+    },
+  })
+
+  return favorite?.uid || null
+}
+
+export const toggleFavoriteAction = async (prevState: {
+  productId: string
+  favoriteId: string | null
+  pathName: string
+}) => {
+  const user = await getAuthUser()
+  const {productId, favoriteId, pathName} = prevState
+
+  try {
+    if (favoriteId) {
+      await prisma.favorite.delete({
+        where: {
+          uid: favoriteId,
+        },
+      })
+    } else {
+      const product = await prisma.product.findUnique({
+        where: {
+          uid: productId,
+        },
+      })
+
+      if (product) {
+        await prisma.favorite.create({
+          data: {
+            uid: uuidv4(),
+            productId: product.id,
+            clerkId: user.id,
+          },
+        })
+      }
+    }
+    revalidatePath(pathName)
+    return {
+      message: favoriteId ? 'removed from favorites' : 'added to favorites',
+    }
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const fetchUserFavorites = async () => {
+  const user = await getAuthUser()
+  return await prisma.favorite.findMany({
+    where: {
+      clerkId: user.id,
+    },
+    include: {
+      product: true,
+    },
+  })
+}
