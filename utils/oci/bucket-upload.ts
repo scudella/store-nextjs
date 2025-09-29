@@ -1,6 +1,6 @@
 import {signBucketUploadRequest} from './sign'
 import {ObjectStorageClient} from 'oci-objectstorage'
-import {provider} from '@/utils/oci/authentication'
+import {getOciProvider} from '@/utils/oci/authentication'
 
 export const uploadImage = async (image: Blob, originalName: string) => {
   const {uploadUrl, objectName} = await signBucketUploadRequest(originalName)
@@ -28,6 +28,7 @@ export const deleteImage = async (imageUrl: string) => {
     const url = new URL(imageUrl)
     const parts = url.pathname.split('/o/')
     const objectName = decodeURIComponent(parts[1])
+    const provider = getOciProvider()
 
     const client = new ObjectStorageClient({
       authenticationDetailsProvider: provider,

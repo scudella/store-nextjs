@@ -1,8 +1,9 @@
 import {ObjectStorageClient, models} from 'oci-objectstorage'
-import {provider} from '@/utils/oci/authentication'
+import {getOciProvider} from '@/utils/oci/authentication'
 
 export async function signBucketUploadRequest(originalName: string) {
   try {
+    const provider = getOciProvider()
     const client = new ObjectStorageClient({
       authenticationDetailsProvider: provider,
     })
