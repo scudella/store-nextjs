@@ -12,6 +12,7 @@ import {
 import {deleteImage, uploadImage} from './oci/bucket-upload'
 import {revalidatePath} from 'next/cache'
 import type {Product} from '@prisma/client'
+import {reviewSchema} from './validation/reviewSchemas'
 
 const getAuthUser = async () => {
   const user = await currentUser()
@@ -281,3 +282,46 @@ export const fetchUserFavorites = async () => {
     },
   })
 }
+
+export const createReviewAction = async (
+  prevState: unknown,
+  formData: FormData
+) => {
+  const user = await getAuthUser()
+
+  try {
+    const rawData = Object.fromEntries(formData)
+    const validatedFields = await validateWithZodSchema(reviewSchema, rawData)
+    const {productId} = validatedFields
+
+    const product = await prisma.product.findUnique({
+      where: {
+        uid: productId,
+      },
+    })
+
+    if (product) {
+      const {id} = product
+      await prisma.review.create({
+        data: {
+          ...validatedFields,
+          productId: id,
+          uid: uuidv4(),
+          clerkId: user.id,
+        },
+      })
+    }
+
+    revalidatePath(`/products/${productId}`)
+
+    return {message: 'review submitted successfully'}
+  } catch (error) {
+    return renderError(error)
+  }
+}
+
+export const fetchProductReviews = async () => {}
+export const fetchProductReviewsByUser = async () => {}
+export const deleteReviewAction = async () => {}
+export const findExistingReview = async () => {}
+export const fetchProductRating = async () => {}

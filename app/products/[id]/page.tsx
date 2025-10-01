@@ -6,6 +6,8 @@ import FavoriteToggleButton from '@/components/products/FavoriteToggleButton'
 import AddToCart from '@/components/single-product/AddToCart'
 import ProductRating from '@/components/single-product/ProductRating'
 import ShareButton from '@/components/single-product/ShareButton'
+import SubmitReview from '@/components/reviews/SubmitReview'
+import ProductReviews from '@/components/reviews/ProductReviews'
 
 type SingleProductPageProps = {
   params: Promise<{id: string}>
@@ -49,6 +51,8 @@ async function SingleProductPage({params}: SingleProductPageProps) {
           <AddToCart productId={id} />
         </div>
       </div>
+      <ProductReviews productId={id} />
+      <SubmitReview productId={id} />
     </section>
   )
 }
