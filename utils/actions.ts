@@ -320,8 +320,59 @@ export const createReviewAction = async (
   }
 }
 
-export const fetchProductReviews = async () => {}
+export const fetchProductReviews = async (productId: string) => {
+  const product = await prisma.product.findUnique({
+    where: {
+      uid: productId,
+    },
+  })
+
+  if (product) {
+    const {id} = product
+    return await prisma.review.findMany({
+      where: {
+        productId: id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  }
+}
+
+export const fetchProductRating = async (productId: string) => {
+  const product = await prisma.product.findUnique({
+    where: {
+      uid: productId,
+    },
+  })
+
+  if (product) {
+    const {id} = product
+
+    const result = await prisma.review.groupBy({
+      by: ['productId'],
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+      where: {
+        productId: id,
+      },
+    })
+    return {
+      rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
+      count: result[0]?._count.rating ?? 0,
+    }
+  }
+  return {
+    rating: 0,
+    count: 0,
+  }
+}
+
 export const fetchProductReviewsByUser = async () => {}
 export const deleteReviewAction = async () => {}
 export const findExistingReview = async () => {}
-export const fetchProductRating = async () => {}
