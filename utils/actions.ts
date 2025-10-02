@@ -440,7 +440,12 @@ const updateOrCreateCartItem = async () => {}
 
 export const updateCart = async () => {}
 
-export const addToCartAction = async () => {}
+export const addToCartAction = async (
+  prevState: unknown,
+  formData: FormData
+) => {
+  return {message: 'product added to the cart'}
+}
 
 export const removeCartItemAction = async () => {}
 
