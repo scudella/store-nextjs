@@ -11,7 +11,7 @@ import {
 } from './validation/productSchemas'
 import {deleteImage, uploadImage} from './oci/bucket-upload'
 import {revalidatePath} from 'next/cache'
-import type {Product} from '@prisma/client'
+import type {Product, Cart} from '@prisma/client'
 import {reviewSchema} from './validation/reviewSchemas'
 
 const getAuthUser = async () => {
@@ -432,19 +432,148 @@ export const fetchCartItems = async () => {
   return cart?.numItemsInCart || 0
 }
 
-const fetchProduct = async () => {}
+const fetchProduct = async (productId: string) => {
+  const product = await prisma.product.findUnique({
+    where: {
+      uid: productId,
+    },
+  })
 
-export const fetchOrCreateCart = async () => {}
+  if (!product) {
+    throw new Error('Product Not Found')
+  }
+  return product
+}
 
-const updateOrCreateCartItem = async () => {}
+const includeProductClause = {
+  cartItems: {
+    include: {
+      product: true,
+    },
+  },
+}
 
-export const updateCart = async () => {}
+export const fetchOrCreateCart = async ({
+  userId,
+  errorOnFailure = false,
+}: {
+  userId: string
+  errorOnFailure?: boolean
+}) => {
+  let cart = await prisma.cart.findFirst({
+    where: {
+      clerkId: userId,
+    },
+    include: includeProductClause,
+  })
+
+  if (!cart && errorOnFailure) {
+    throw new Error('Cart not found')
+  }
+
+  if (!cart) {
+    cart = await prisma.cart.create({
+      data: {
+        clerkId: userId,
+        uid: uuidv4(),
+      },
+      include: includeProductClause,
+    })
+  }
+  return cart
+}
+
+const updateOrCreateCartItem = async ({
+  productId,
+  cartId,
+  amount,
+}: {
+  productId: bigint
+  cartId: bigint
+  amount: number
+}) => {
+  let cartItem = await prisma.cartItem.findFirst({
+    where: {
+      productId,
+      cartId,
+    },
+  })
+
+  if (cartItem) {
+    cartItem = await prisma.cartItem.update({
+      where: {
+        id: cartItem.id,
+      },
+      data: {
+        amount: cartItem.amount + amount,
+      },
+    })
+  } else {
+    cartItem = await prisma.cartItem.create({
+      data: {
+        amount,
+        productId,
+        cartId,
+        uid: uuidv4(),
+      },
+    })
+  }
+}
+
+export const updateCart = async (cart: Cart) => {
+  const cartItems = await prisma.cartItem.findMany({
+    where: {
+      cartId: cart.id,
+    },
+    include: {
+      product: true,
+    },
+  })
+  let numItemsInCart = 0
+  let cartTotal = 0
+
+  for (const item of cartItems) {
+    numItemsInCart += item.amount
+    cartTotal += item.amount * item.product.price
+  }
+  const tax = cart.taxRate * cartTotal
+  const shipping = cartTotal ? cart.shipping : 0
+  const orderTotal = cartTotal + tax + shipping
+
+  return await prisma.cart.update({
+    where: {
+      id: cart.id,
+    },
+    data: {
+      numItemsInCart,
+      cartTotal,
+      tax,
+      orderTotal,
+    },
+    include: includeProductClause,
+  })
+}
 
 export const addToCartAction = async (
   prevState: unknown,
   formData: FormData
 ) => {
-  return {message: 'product added to the cart'}
+  const user = await getAuthUser()
+  try {
+    const productId = formData.get('productId') as string
+    const amount = Number(formData.get('amount'))
+    const product = await fetchProduct(productId)
+    const cart = await fetchOrCreateCart({userId: user.id})
+    await updateOrCreateCartItem({
+      productId: product.id,
+      cartId: cart.id,
+      amount,
+    })
+    await updateCart(cart)
+  } catch (error) {
+    return renderError(error)
+  }
+  redirect('/cart')
 }
 
 export const removeCartItemAction = async () => {}
