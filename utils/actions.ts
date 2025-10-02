@@ -1,6 +1,6 @@
 'use server'
 
-import {currentUser} from '@clerk/nextjs/server'
+import {auth, currentUser} from '@clerk/nextjs/server'
 import {prisma} from './db'
 import {redirect} from 'next/navigation'
 import {v4 as uuidv4} from 'uuid'
@@ -418,3 +418,30 @@ export const findExistingReview = async (userId: string, productId: bigint) => {
     },
   })
 }
+
+export const fetchCartItems = async () => {
+  const {userId} = await auth()
+  const cart = await prisma.cart.findFirst({
+    where: {
+      clerkId: userId ?? '',
+    },
+    select: {
+      numItemsInCart: true,
+    },
+  })
+  return cart?.numItemsInCart || 0
+}
+
+const fetchProduct = async () => {}
+
+export const fetchOrCreateCart = async () => {}
+
+const updateOrCreateCartItem = async () => {}
+
+export const updateCart = async () => {}
+
+export const addToCartAction = async () => {}
+
+export const removeCartItemAction = async () => {}
+
+export const updateCartItemAction = async () => {}
