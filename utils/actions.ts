@@ -211,15 +211,11 @@ export const updateProductImageAction = async (
 export const fetchFavoriteId = async ({productId}: {productId: string}) => {
   const user = await getAuthUser()
 
-  const product = await prisma.product.findUnique({
-    where: {
-      uid: productId,
-    },
-  })
+  const product = await fetchProduct(productId)
 
   const favorite = await prisma.favorite.findFirst({
     where: {
-      productId: product?.id,
+      productId: product.id,
       clerkId: user.id,
     },
     select: {
@@ -246,21 +242,15 @@ export const toggleFavoriteAction = async (prevState: {
         },
       })
     } else {
-      const product = await prisma.product.findUnique({
-        where: {
-          uid: productId,
+      const product = await fetchProduct(productId)
+
+      await prisma.favorite.create({
+        data: {
+          uid: uuidv4(),
+          productId: product.id,
+          clerkId: user.id,
         },
       })
-
-      if (product) {
-        await prisma.favorite.create({
-          data: {
-            uid: uuidv4(),
-            productId: product.id,
-            clerkId: user.id,
-          },
-        })
-      }
     }
     revalidatePath(pathName)
     return {
@@ -294,23 +284,17 @@ export const createReviewAction = async (
     const validatedFields = await validateWithZodSchema(reviewSchema, rawData)
     const {productId} = validatedFields
 
-    const product = await prisma.product.findUnique({
-      where: {
-        uid: productId,
+    const product = await fetchProduct(productId)
+
+    const {id} = product
+    await prisma.review.create({
+      data: {
+        ...validatedFields,
+        productId: id,
+        uid: uuidv4(),
+        clerkId: user.id,
       },
     })
-
-    if (product) {
-      const {id} = product
-      await prisma.review.create({
-        data: {
-          ...validatedFields,
-          productId: id,
-          uid: uuidv4(),
-          clerkId: user.id,
-        },
-      })
-    }
 
     revalidatePath(`/products/${productId}`)
 
@@ -321,55 +305,39 @@ export const createReviewAction = async (
 }
 
 export const fetchProductReviews = async (productId: string) => {
-  const product = await prisma.product.findUnique({
+  const product = await fetchProduct(productId)
+
+  const {id} = product
+  return await prisma.review.findMany({
     where: {
-      uid: productId,
+      productId: id,
+    },
+    orderBy: {
+      createdAt: 'desc',
     },
   })
-
-  if (product) {
-    const {id} = product
-    return await prisma.review.findMany({
-      where: {
-        productId: id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
-  }
 }
 
 export const fetchProductRating = async (productId: string) => {
-  const product = await prisma.product.findUnique({
+  const product = await fetchProduct(productId)
+
+  const {id} = product
+
+  const result = await prisma.review.groupBy({
+    by: ['productId'],
+    _avg: {
+      rating: true,
+    },
+    _count: {
+      rating: true,
+    },
     where: {
-      uid: productId,
+      productId: id,
     },
   })
-
-  if (product) {
-    const {id} = product
-
-    const result = await prisma.review.groupBy({
-      by: ['productId'],
-      _avg: {
-        rating: true,
-      },
-      _count: {
-        rating: true,
-      },
-      where: {
-        productId: id,
-      },
-    })
-    return {
-      rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
-      count: result[0]?._count.rating ?? 0,
-    }
-  }
   return {
-    rating: 0,
-    count: 0,
+    rating: result[0]?._avg.rating?.toFixed(1) ?? 0,
+    count: result[0]?._count.rating ?? 0,
   }
 }
 
