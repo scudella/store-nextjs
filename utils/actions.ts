@@ -609,5 +609,56 @@ export const createOrderAction = async (
   prevState: unknown,
   formData: FormData
 ) => {
-  return {message: 'order created'}
+  const user = await getAuthUser()
+  try {
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    })
+    const order = await prisma.order.create({
+      data: {
+        uid: uuidv4(),
+        clerkId: user.id,
+        products: cart.numItemsInCart,
+        orderTotal: cart.orderTotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        email: user.emailAddresses[0].emailAddress,
+      },
+    })
+    await prisma.cart.delete({
+      where: {
+        id: cart.id,
+      },
+    })
+  } catch (error) {
+    return renderError(error)
+  }
+  redirect('/orders')
+}
+
+export const fetchUserOrders = async () => {
+  const user = await getAuthUser()
+  return await prisma.order.findMany({
+    where: {
+      clerkId: user.id,
+      isPaid: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
+}
+
+export const fetchAdminOrders = async () => {
+  await getAdminUser()
+
+  return prisma.order.findMany({
+    where: {
+      isPaid: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
 }
