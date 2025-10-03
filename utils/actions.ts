@@ -544,6 +544,37 @@ export const addToCartAction = async (
   redirect('/cart')
 }
 
-export const removeCartItemAction = async () => {}
+export const removeCartItemAction = async (
+  prevState: unknown,
+  formData: FormData
+) => {
+  const user = await getAuthUser()
+  try {
+    const cartItemId = formData.get('id') as string
+    const cart = await fetchOrCreateCart({
+      userId: user.id,
+      errorOnFailure: true,
+    })
+
+    await prisma.cartItem.delete({
+      where: {
+        uid: cartItemId,
+        cartId: cart.id,
+      },
+    })
+    await updateCart(cart)
+    revalidatePath('/cart')
+  } catch (error) {
+    return renderError(error)
+  }
+  return {message: 'Item removed from cart'}
+}
 
 export const updateCartItemAction = async () => {}
+
+export const createOrderAction = async (
+  prevState: unknown,
+  formData: FormData
+) => {
+  return {message: 'order created'}
+}
