@@ -29,7 +29,7 @@ function ThirdColumn({quantity, id}: {quantity: number; id: string}) {
         amount={amount}
         setAmount={handleAmountChange}
         mode={modeUsage.cartItem}
-        isLoading={false}
+        isLoading={isLoading}
       />
       <FormContainer action={removeCartItemAction}>
         <input type='hidden' name='id' value={id} />
