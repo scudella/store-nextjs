@@ -610,11 +610,22 @@ export const createOrderAction = async (
   formData: FormData
 ) => {
   const user = await getAuthUser()
+  let orderId: string | null = null
+  let cartId: string | null = null
   try {
     const cart = await fetchOrCreateCart({
       userId: user.id,
       errorOnFailure: true,
     })
+    cartId = cart.uid
+
+    await prisma.order.deleteMany({
+      where: {
+        clerkId: user.id,
+        isPaid: false,
+      },
+    })
+
     const order = await prisma.order.create({
       data: {
         uid: uuidv4(),
@@ -626,15 +637,11 @@ export const createOrderAction = async (
         email: user.emailAddresses[0].emailAddress,
       },
     })
-    await prisma.cart.delete({
-      where: {
-        id: cart.id,
-      },
-    })
+    orderId = order.uid
   } catch (error) {
     return renderError(error)
   }
-  redirect('/orders')
+  redirect(`/checkout?orderId=${orderId}&cartId=${cartId}`)
 }
 
 export const fetchUserOrders = async () => {
