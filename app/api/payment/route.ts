@@ -1,9 +1,18 @@
 import Stripe from 'stripe'
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 import {type NextRequest} from 'next/server'
 import {prisma} from '@/utils/db'
 
 export const POST = async (req: NextRequest) => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    // This is a safety check for runtime errors
+    return Response.json(
+      {error: 'Stripe secret key not configured.'},
+      {status: 500}
+    )
+  }
+  // 🔑 LAZY LOADING: Stripe is initialized ONLY when GET is called
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
+
   const requestHeaders = new Headers(req.headers)
   const origin = requestHeaders.get('origin')
 
