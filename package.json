@@ -1,6 +1,6 @@
 {
   "name": "store-next",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
