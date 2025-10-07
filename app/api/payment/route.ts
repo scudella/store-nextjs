@@ -10,11 +10,10 @@ export const POST = async (req: NextRequest) => {
       {status: 500}
     )
   }
-  // 🔑 LAZY LOADING: Stripe is initialized ONLY when GET is called
+  // 🔑 LAZY LOADING: Stripe is initialized ONLY when POST is called
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string)
 
-  const requestHeaders = new Headers(req.headers)
-  const origin = requestHeaders.get('origin')
+  const origin = process.env.ORIGIN
 
   const {orderId, cartId} = await req.json()
 
