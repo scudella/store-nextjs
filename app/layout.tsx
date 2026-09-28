@@ -1,6 +1,6 @@
 import type {Metadata} from 'next'
 import {Geist, Geist_Mono} from 'next/font/google'
-import './globals.css'
+import '@/app/globals.css'
 import Navbar from '@/components/navbar/Navbar'
 import Container from '@/components/global/Container'
 import Providers from './providers'
@@ -21,23 +21,20 @@ export const metadata: Metadata = {
   description: 'A store built with Next.js',
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
-    <ClerkProvider>
-      <html lang='en' suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+    <html lang='en' suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ClerkProvider>
           <Providers>
             <Navbar />
             <Container className='py-20'>{children}</Container>
           </Providers>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   )
 }
