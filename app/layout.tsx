@@ -1,20 +1,11 @@
 import type {Metadata} from 'next'
-import {Geist, Geist_Mono} from 'next/font/google'
 import '@/app/globals.css'
+import {GeistSans} from 'geist/font/sans'
+import {GeistMono} from 'geist/font/mono'
 import Navbar from '@/components/navbar/Navbar'
 import Container from '@/components/global/Container'
 import Providers from './providers'
 import {ClerkProvider} from '@clerk/nextjs'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
 
 export const metadata: Metadata = {
   title: 'Next Store',
@@ -26,7 +17,7 @@ export default function RootLayout({children}: {children: React.ReactNode}) {
     <html lang='en' suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
       >
         <ClerkProvider>
           <Providers>
